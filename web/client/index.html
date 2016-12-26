@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/d3/d3.min.js"></script>
+    <script src="bower_components/lodash/dist/lodash.min.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script src="js/vcomponent.js"></script>
+    <script src="js/translate.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="bower_components/bootswatch/cosmo/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/font-awesome/css/font-awesome.min.css">
+
+</head>
+<body>
+<div class="container-fluid">
+  <div id="base">
+  </div>
+</div>
+
+<script>
+  $(function () {
+  
+  new TranslateComponent({parent: d3.select('#base')});
+  })
+</script>
+
+
+</body>
+</html>

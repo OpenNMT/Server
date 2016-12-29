@@ -106,10 +106,10 @@ class SVG {
     static translate({x, y}) {return "translate(" + x + "," + y + ")"}
 
     static group(parent, classes, pos) {
-        return parent.append('g').attrs({
-            class: classes,
-            "transform": SVG.translate(pos)
-        })
+        return parent.append('g')
+            .attr("class", classes)
+            .attr("transform", SVG.translate(pos));
+        
     }
 
 }

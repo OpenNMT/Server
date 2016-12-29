@@ -31,15 +31,20 @@ class TranslateComponent extends VComponent {
         this.output = form
             .append("input")
             .attr("type","input");
-        
+        this.svg = this.parent.append("svg").attr("width",2000).attr("height", 1000);
+        let alignments = SVG.group(this.svg, "", {x: 0, y: 100});
+        this.alignment = [new AlignmentComponent({parent: alignments})];
     }
 
     translate() {
         console.log(this.input.property("value"));
         $.ajax("/api/translate?src="+this.input.property("value"), {
             dataType : 'json',
-            success: translation =>
-                this.output.property("value", translation.message)
+            success: translation => {
+                console.log(translation);
+                // this.output.property("value", translation.message);
+                this.alignment[0].update(translation[1]);
+            }
         })
     }
     

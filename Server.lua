@@ -16,25 +16,12 @@ cmd:text("")
 cmd:text("**Data options**")
 cmd:text("")
 
-cmd:option('-model', '', [[Path to model .t7 file]])
 cmd:option('-src', '', [[Source sequence to decode (one line per sequence)]])
 cmd:option('-tgt', '', [[True target sequence (optional)]])
 cmd:option('-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
 
--- beam search options
-cmd:text("")
-cmd:text("**Beam Search options**")
-cmd:text("")
-cmd:option('-beam_size', 5,[[Beam size]])
-cmd:option('-max_sent_length', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
-cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the source token that
-                              had the highest attention weight. If phrase_table is provided,
-                              it will lookup the identified source token and give the corresponding
-                              target token. If it is not provided (or the identified source token
-                              does not exist in the table) then it will copy the source token]])
-cmd:option('-phrase_table', '', [[Path to source-target dictionary to replace UNK
-                                     tokens. See README.md for the format this file should be in]])
-cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
+onmt.translate.Translator.declareOpts(cmd)
+
 
 cmd:text("")
 cmd:text("**Other options**")
@@ -67,13 +54,25 @@ local function translate(line)
   if #srcFeats > 0 then
     table.insert(srcFeaturesBatch, srcFeats)
   end
+  local data = onmt.translate.Translator.buildData(srcWordsBatch, srcFeaturesBatch,
+                         tgtWordsBatch, tgtFeaturesBatch)
+  local batch = data:getBatch()
+
+  local pred, predFeats, predScore, attn, goldScore = onmt.translate.Translator.translateBatch(batch)
   
-  local predBatch, info = onmt.translate.Translator.translate(srcWordsBatch, srcFeaturesBatch,
-                                                              tgtWordsBatch, tgtFeaturesBatch)
-  
-  local srcSent = table.concat(srcBatch[1], " ")
-  local predSent = table.concat(predBatch[1], " ") 
-  return predSent
+  local b = 1
+  local ret = {}
+  for i = 1, 5 do
+    local predBatch = onmt.translate.Translator.buildTargetTokens(pred[b][i], predFeats[b][i], srcBatch[b], attn[b][i])
+    local predSent = predBatch
+    local attnTable = {}  
+    for j = 1, #attn[b][i] do
+      table.insert(attnTable, attn[b][i][j]:totable())
+    end
+    local srcSent = srcBatch[b]
+    table.insert(ret, {message = predSent, attn = attnTable, src=srcSent})
+  end
+  return ret
 end
 
 local function main()
@@ -86,7 +85,7 @@ local function main()
   while true do
     local message = json.decode(s:recv())
     local translate = translate(message.src)
-    s:send(json.encode({message = translate}))
+    s:send(json.encode(translate))
     collectgarbage()
   end
 end
